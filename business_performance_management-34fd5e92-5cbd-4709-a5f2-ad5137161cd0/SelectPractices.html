@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Select Practice</title>
+    <style>
+        body {font-family: Arial, sans-serif; background-color: #f4f4f9;}
+        .practice-card {width: 300px; margin: 50px auto; padding: 20px; background-color: #fff; box-shadow: 0 2px 10px rgba(0,0,0,0.1);}
+        .practice-card h2 {text-align: center; color: #333;}
+        .practice-list {list-style-type: none; padding: 0;}
+        .practice-list li {padding: 10px; cursor: pointer; border-bottom: 1px solid #ddd;}
+        .practice-list li:hover {background-color: #f1f1f1;}
+    </style>
+</head>
+<body>
+    <div class="practice-card">
+        <h2>Select a Practice</h2>
+        <ul class="practice-list" id="practiceList"></ul>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            let requestKey = sessionStorage.getItem('request_key');
+            fetch('https://api.sikkasoft.com/v4/practices', {
+                method: 'GET',
+                headers: {'Content-Type': 'application/json', 'Request-Key': requestKey}
+            })
+            .then(response => response.json())
+            .then(data => {
+                let practiceList = document.getElementById('practiceList');
+                data.items.forEach(practice => {
+                    let listItem = document.createElement('li');
+                    listItem.textContent = practice.name;
+                    listItem.onclick = function() {
+                        sessionStorage.setItem('selected_practice', practice.practice_id);
+                        window.location.href = 'Dashboard.html';
+                    }
+                    practiceList.appendChild(listItem);
+                });
+            });
+        });
+    </script>
+</body>
+</html>

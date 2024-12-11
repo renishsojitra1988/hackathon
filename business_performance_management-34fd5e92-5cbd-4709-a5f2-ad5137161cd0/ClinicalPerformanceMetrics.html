@@ -1,0 +1,125 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clinical Performance Metrics</title>
+    <style>
+        body {font-family: Arial, sans-serif; background-color: #f5f5f5; display: flex;}
+        .sidebar {width: 200px; background-color: #333; color: white; height: 100vh; padding: 20px;}
+        .sidebar ul {list-style-type: none; padding: 0;}
+        .sidebar ul li {margin: 20px 0; cursor: pointer;}
+        .sidebar ul li:hover {text-decoration: underline;}
+        .content {flex: 1; padding: 20px;}
+        .table-container {margin-top: 20px;}
+        table {width: 100%; border-collapse: collapse; margin-top: 20px;}
+        th, td {border: 1px solid #ddd; padding: 8px; text-align: left;}
+        th {background-color: #333; color: white;}
+        input[type="date"] {padding: 5px; margin: 10px 0;}
+        .menu-title {color: #faa307; font-weight: bold;}
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <ul>
+            <li class="menu-title">Menu</li>
+            <li onclick="window.location.href='Dashboard.html'">Dashboard</li>
+            <li onclick="window.location.href='PatientManagement.html'">Patient Management</li>
+            <li onclick="window.location.href='AppointmentandSchedulingManagement.html'">Appointment & Scheduling</li>
+            <li onclick="window.location.href='ClinicalPerformanceMetrics.html'">Clinical Performance Metrics</li>
+            <li onclick="logout()">Logout</li>
+        </ul>
+    </div>
+    <div class="content">
+        <h1>Clinical Performance Metrics</h1>
+        <label>Start Date: </label><input type="date" id="startdate">
+        <label>End Date: </label><input type="date" id="enddate">
+        <button onclick="getClinicalData()">Get Data</button>
+        <div class="table-container">
+            <table id="totalProductionByProviderCategory">
+                <thead>
+                    <tr>
+                        <th>Category</th>
+                        <th>Total Production</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+            <div id="productionPerHour" class="card"></div>
+        </div>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            loadClinicalPerformanceData();
+        });
+
+        function loadClinicalPerformanceData() {
+            const currentDate = new Date();
+            const start = new Date(currentDate);
+            start.setDate(start.getDate() - 30);
+
+            document.getElementById('startdate').value = start.toISOString().split('T')[0];
+            document.getElementById('enddate').value = currentDate.toISOString().split('T')[0];
+
+            getClinicalData();
+        }
+
+        function getClinicalData() {
+            let startdate = document.getElementById('startdate').value;
+            let enddate = document.getElementById('enddate').value;
+            let requestKey = sessionStorage.getItem('request_key');
+            let practiceId = sessionStorage.getItem('selected_practice');
+
+            const productionByProviderCategoryUrl = `https://api.sikkasoft.com/v4/kpis/total_production_by_provider_category?startdate=${startdate}&enddate=${enddate}&practice_id=${practiceId}`;
+            const productionPerHourUrl = `https://api.sikkasoft.com/v4/kpis/provider_total_production_per_hour?startdate=${startdate}&enddate=${enddate}&practice_id=${practiceId}`;
+
+            fetchClinicalPerformanceData(productionByProviderCategoryUrl, productionPerHourUrl, requestKey);
+        }
+
+        function fetchClinicalPerformanceData(productionByProviderCategoryUrl, productionPerHourUrl, requestKey) {
+            Promise.all([
+                fetch(productionByProviderCategoryUrl, { headers: { 'Content-Type': 'application/json', 'Request-Key': requestKey }}),
+                fetch(productionPerHourUrl, { headers: { 'Content-Type': 'application/json', 'Request-Key': requestKey }}),
+            ])
+            .then(async (responses) => {
+                const [providerCategoryRes, providerPerHourRes] = responses;
+
+                if (providerCategoryRes.status === 204 || providerPerHourRes.status === 204) {
+                    alert('Data might not be available for some categories.');
+                    return;
+                }
+
+                if (providerCategoryRes.status !== 200 || providerPerHourRes.status !== 200) {
+                    alert('Bad Request.');
+                    return;
+                }
+
+                const providerCategory = await providerCategoryRes.json();
+                const providerPerHour = await providerPerHourRes.json();
+
+                updateClinicalPerformance(providerCategory, providerPerHour);
+            });
+        }
+
+        function updateClinicalPerformance(providerCategory, providerPerHour) {
+            let tableBody = document.querySelector('#totalProductionByProviderCategory tbody');
+            tableBody.innerHTML = '';
+
+            providerCategory.items.forEach(item => {
+                let row = tableBody.insertRow();
+                row.insertCell(0).innerHTML = item.category;
+                row.insertCell(1).innerHTML = item.total_production;
+            });
+
+            let productionPerHourCard = document.getElementById('productionPerHour');
+            productionPerHourCard.innerHTML = '';
+            productionPerHourCard.className = 'card';
+            productionPerHourCard.innerHTML = `<h3>Total Production per Hour</h3><p>${providerPerHour.items[0].total_production}</p>`;
+        }
+
+        function logout() {
+            sessionStorage.clear();
+            window.location.href = 'Login.html';
+        }
+    </script>
+</body>
+</html>
