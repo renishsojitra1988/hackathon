@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <style>
+        body { display: flex; }
+        #menu { width: 200px; padding: 1em; background-color: #f0f0f0; }
+        #content { flex-grow: 1; padding: 1em; }
+        .card { background: white; padding: 1em; margin-bottom: 1em; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        a { display: block; padding: 0.5em; color: #333; text-decoration: none; }
+        a:hover { background-color: #ddd; }
+    </style>
+</head>
+<body>
+    <div id="menu">
+        <a href="dashboard.html">Dashboard</a>
+        <a href="appointments.html">Appointments</a>
+        <a href="requestedReviews.html">Requested Reviews</a>
+        <a href="logout.html">Logout</a>
+    </div>
+    <div id="content">
+        <h1>Dashboard</h1>
+        <div class="card">Total Reviews Received: <span id="totalReviews">150</span></div>
+        <div class="card">Average Review Score: <span id="avgReviewScore">4.5</span></div>
+        <div class="card">New Reviews This Month: <span id="newReviews">15</span></div>
+        <div class="card">Invites Sent This Month: <span id="invitesSent">30</span></div>
+    </div>
+</body>
+</html>

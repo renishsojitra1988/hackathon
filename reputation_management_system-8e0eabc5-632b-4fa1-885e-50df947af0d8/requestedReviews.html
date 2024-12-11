@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Requested Reviews</title>
+    <style>
+        body { display: flex; }
+        #menu { width: 200px; padding: 1em; background-color: #f0f0f0; }
+        #content { flex-grow: 1; padding: 1em; }
+        table { width: 100%; border-collapse: collapse; margin-top: 1em; }
+        td, th { border: 1px solid #ddd; padding: 8px; }
+        th { background-color: #f2f2f2; }
+    </style>
+</head>
+<body>
+    <div id="menu">
+        <a href="dashboard.html">Dashboard</a>
+        <a href="appointments.html">Appointments</a>
+        <a href="requestedReviews.html">Requested Reviews</a>
+        <a href="logout.html">Logout</a>
+    </div>
+    <div id="content">
+        <h1>Requested Reviews</h1>
+        <table>
+            <thead>
+                <tr>
+                    <th>Patient Name</th>
+                    <th>Email</th>
+                </tr>
+            </thead>
+            <tbody id="requestedReviewsTable">
+                <!-- Requested review data populated here -->
+            </tbody>
+        </table>
+    </div>
+    <script>
+        function loadRequestedReviews() {
+            fetch('reviewRequested.csv')
+                .then(response => response.text())
+                .then(csv => {
+                    const reviews = csv.split('\n');
+                    const tbody = document.getElementById('requestedReviewsTable');
+                    reviews.forEach(review => {
+                        if (review.trim()) {
+                            const [patientName, email] = review.split(',');
+                            const tr = document.createElement('tr');
+                            tr.innerHTML = `<td>${patientName}</td><td>${email}</td>`;
+                            tbody.appendChild(tr);
+                        }
+                    });
+                    if(tbody.innerHTML.trim() === '') {
+                        tbody.innerHTML = '<tr><td colspan="2">No Data Available</td></tr>';
+                    }
+                }).catch(err => {
+                    document.getElementById('requestedReviewsTable').innerHTML = '<tr><td colspan="2">No File Found</td></tr>';
+                });
+        }
+        window.onload = loadRequestedReviews;
+    </script>
+</body>
+</html>

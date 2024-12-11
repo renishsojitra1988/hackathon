@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Select Practice</title>
+    <style>
+        body { display: flex; flex-direction: column; align-items: center; padding: 2em; background-color: #f3f4f6; }
+        select, button { margin-top: 1em; padding: 0.5em; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <h1>Select Your Practice</h1>
+    <select id="practiceSelect">
+        <!-- Options will be populated by JavaScript -->
+    </select>
+    <button onclick="selectPractice()">Continue</button>
+    <script>
+        async function fetchPractices() {
+            const request_key = sessionStorage.getItem('request_key');
+            const response = await fetch('https://api.sikkasoft.com/v4/practices', {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json', 'Request-Key': request_key }
+            });
+            if(response.ok) {
+                const data = await response.json();
+                const select = document.getElementById('practiceSelect');
+                data.items.forEach(practice => {
+                    const option = document.createElement('option');
+                    option.value = practice.practice_id;
+                    option.textContent = practice.name;
+                    select.appendChild(option);
+                });
+            } else {
+                alert('Failed to load practices');
+            }
+        }
+
+        function selectPractice() {
+            const practiceId = document.getElementById('practiceSelect').value;
+            sessionStorage.setItem('practice_id', practiceId);
+            window.location.href = 'dashboard.html';
+        }
+
+        window.onload = fetchPractices;
+    </script>
+</body>
+</html>
