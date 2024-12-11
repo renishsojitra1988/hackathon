@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patient Management</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            display: flex;
+            min-height: 100vh;
+            margin: 0;
+        }
+        .sidebar {
+            width: 200px;
+            background-color: #343a40;
+            color: white;
+            display: flex;
+            flex-direction: column;
+        }
+        .sidebar a {
+            padding: 15px;
+            text-decoration: none;
+            color: white;
+        }
+        .sidebar a:hover {
+            background-color: #495057;
+        }
+        .content {
+            flex-grow: 1;
+            padding: 20px;
+        }
+        .card {
+            background-color: white;
+            padding: 20px;
+            margin: 10px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <a href="Dashboard.html">Dashboard</a>
+        <a href="PatientManagement.html">Patient Management</a>
+        <a href="AppointmentandSchedulingManagement.html">Appointment and Scheduling</a>
+        <a href="ClinicalPerformanceMetrics.html">Clinical Performance</a>
+        <a href="#" onclick="logout()">Logout</a>
+    </div>
+    <div class="content">
+        <h2>Patient Management</h2>
+        <input type="date" id="startdate"> to
+        <input type="date" id="enddate">
+        <button onclick="getPatientData()">Get Data</button>
+
+        <div class="card" id="newPatients"></div>
+        <div class="card" id="activePatients"></div>
+        <div class="card" id="patientsSeen"></div>
+    </div>
+
+    <script>
+        const request_key = sessionStorage.getItem('request_key');
+        const practice_id = sessionStorage.getItem('selectedPractice');
+
+        function getPatientData() {
+            const startdate = document.getElementById('startdate').value;
+            const enddate = document.getElementById('enddate').value;
+
+            fetch(`https://api.sikkasoft.com/v4/kpis/new_patients?startdate=${startdate}&enddate=${enddate}&practice_id=${practice_id}`, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Request-Key': request_key
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                const newPatients = data.items[0]?.new_patients || 'Data not available';
+                document.getElementById('newPatients').textContent = `New Patients: ${newPatients}`;
+            });
+
+            fetch(`https://api.sikkasoft.com/v4/kpis/active_patients?practice_id=${practice_id}`, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Request-Key': request_key
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                const activePatients = data.items[0]?.active_patients || 'Data not available';
+                document.getElementById('activePatients').textContent = `Active Patients: ${activePatients}`;
+            });
+
+            fetch(`https://api.sikkasoft.com/v4/kpis/number_of_patients_seen?startdate=${startdate}&enddate=${enddate}&practice_id=${practice_id}`, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Request-Key': request_key
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                const patientsSeen = data.items[0]?.total_patients || 'Data not available';
+                document.getElementById('patientsSeen').textContent = `Total Number Of Patients Seen: ${patientsSeen}`;
+            });
+        }
+
+        function logout() {
+            sessionStorage.clear();
+            window.location.href = 'Login.html';
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const currentDate = new Date().toISOString().slice(0, 10);
+            document.getElementById('startdate').value = new Date(Date.now() - 30*24*60*60*1000).toISOString().slice(0, 10);
+            document.getElementById('enddate').value = currentDate;
+            getPatientData();
+        });
+    </script>
+</body>
+</html>

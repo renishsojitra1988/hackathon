@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clinical Performance Metrics</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            display: flex;
+            min-height: 100vh;
+            margin: 0;
+        }
+        .sidebar {
+            width: 200px;
+            background-color: #343a40;
+            color: white;
+            display: flex;
+            flex-direction: column;
+        }
+        .sidebar a {
+            padding: 15px;
+            text-decoration: none;
+            color: white;
+        }
+        .sidebar a:hover {
+            background-color: #495057;
+        }
+        .content {
+            flex-grow: 1;
+            padding: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            border: 1px solid #ccc;
+            padding: 10px;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <a href="Dashboard.html">Dashboard</a>
+        <a href="PatientManagement.html">Patient Management</a>
+        <a href="AppointmentandSchedulingManagement.html">Appointment and Scheduling</a>
+        <a href="ClinicalPerformanceMetrics.html">Clinical Performance</a>
+        <a href="#" onclick="logout()">Logout</a>
+    </div>
+    <div class="content">
+        <h2>Clinical Performance Metrics</h2>
+        <input type="date" id="startdate"> to
+        <input type="date" id="enddate">
+        <button onclick="getClinicalData()">Get Data</button>
+
+        <div>
+            <h3>Total Production By Provider Category</h3>
+            <table id="providerCategoryTable">
+                <tr>
+                    <th>Category</th>
+                    <th>Total Production</th>
+                </tr>
+            </table>
+        </div>
+
+        <div class="card" id="productionPerHour">Total Production Per Hour By Provider: <span id="productionData"></span></div>
+    </div>
+
+    <script>
+        const request_key = sessionStorage.getItem('request_key');
+        const practice_id = sessionStorage.getItem('selectedPractice');
+
+        function getClinicalData() {
+            const startdate = document.getElementById('startdate').value;
+            const enddate = document.getElementById('enddate').value;
+
+            fetch(`https://api.sikkasoft.com/v4/kpis/total_production_by_provider_category?startdate=${startdate}&enddate=${enddate}&practice_id=${practice_id}`, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Request-Key': request_key
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                const providerCategoryTable = document.getElementById('providerCategoryTable');
+                data.items.forEach(item => {
+                    const row = providerCategoryTable.insertRow();
+                    row.insertCell(0).textContent = item.category;
+                    row.insertCell(1).textContent = item.total_production;
+                });
+            });
+
+            fetch(`https://api.sikkasoft.com/v4/kpis/provider_total_production_per_hour?startdate=${startdate}&enddate=${enddate}&practice_id=${practice_id}`, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Request-Key': request_key
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                const totalProduction = data.items[0]?.total_production || 'Data not available';
+                document.getElementById('productionPerHour').textContent = `Total Production per Hour By Provider: ${totalProduction}`;
+            });
+        }
+
+        function logout() {
+            sessionStorage.clear();
+            window.location.href = 'Login.html';
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const currentDate = new Date().toISOString().slice(0, 10);
+            document.getElementById('startdate').value = new Date(Date.now() - 30*24*60*60*1000).toISOString().slice(0, 10);
+            document.getElementById('enddate').value = currentDate;
+            getClinicalData();
+        });
+    </script>
+</body>
+</html>

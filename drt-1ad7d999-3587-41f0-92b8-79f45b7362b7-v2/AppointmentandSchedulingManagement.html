@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Appointment and Scheduling Management</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            display: flex;
+            min-height: 100vh;
+            margin: 0;
+        }
+        .sidebar {
+            width: 200px;
+            background-color: #343a40;
+            color: white;
+            display: flex;
+            flex-direction: column;
+        }
+        .sidebar a {
+            padding: 15px;
+            text-decoration: none;
+            color: white;
+        }
+        .sidebar a:hover {
+            background-color: #495057;
+        }
+        .content {
+            flex-grow: 1;
+            padding: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            border: 1px solid #ccc;
+            padding: 10px;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <a href="Dashboard.html">Dashboard</a>
+        <a href="PatientManagement.html">Patient Management</a>
+        <a href="AppointmentandSchedulingManagement.html">Appointment and Scheduling</a>
+        <a href="ClinicalPerformanceMetrics.html">Clinical Performance</a>
+        <a href="#" onclick="logout()">Logout</a>
+    </div>
+    <div class="content">
+        <h2>Appointment and Scheduling Management</h2>
+        <input type="date" id="startdate"> to
+        <input type="date" id="enddate">
+        <button onclick="getAppointmentData()">Get Data</button>
+
+        <div>
+            <h3>New Patients Visited Without Future Appointments</h3>
+            <table id="newPatientsTable">
+                <tr>
+                    <th>Firstname</th>
+                    <th>Lastname</th>
+                    <th>Address</th>
+                    <th>City</th>
+                    <th>Email</th>
+                    <th>First Visit</th>
+                </tr>
+            </table>
+        </div>
+
+        <div>
+            <h3>Patients Visited Without Future Appointments</h3>
+            <table id="patientsTable">
+                <tr>
+                    <th>Firstname</th>
+                    <th>Lastname</th>
+                    <th>Address</th>
+                    <th>City</th>
+                    <th>Email</th>
+                    <th>Procedure Date</th>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        const request_key = sessionStorage.getItem('request_key');
+        const practice_id = sessionStorage.getItem('selectedPractice');
+
+        function getAppointmentData() {
+            const startdate = document.getElementById('startdate').value;
+            const enddate = document.getElementById('enddate').value;
+
+            fetch(`https://api.sikkasoft.com/v4/kpis/new_patients_first_visit_without_future_appointments_details?startdate=${startdate}&enddate=${enddate}&practice_id=${practice_id}`, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Request-Key': request_key
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                const newPatientsTable = document.getElementById('newPatientsTable');
+                data.items.forEach(item => {
+                    const row = newPatientsTable.insertRow();
+                    row.insertCell(0).textContent = item.firstname;
+                    row.insertCell(1).textContent = item.lastname;
+                    row.insertCell(2).textContent = item.address_line1;
+                    row.insertCell(3).textContent = item.city;
+                    row.insertCell(4).textContent = item.email;
+                    row.insertCell(5).textContent = item.first_visit;
+                });
+            });
+
+            fetch(`https://api.sikkasoft.com/v4/kpis/patients_visits_without_future_appointments_details?startdate=${startdate}&enddate=${enddate}&practice_id=${practice_id}`, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Request-Key': request_key
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                const patientsTable = document.getElementById('patientsTable');
+                data.items.forEach(item => {
+                    const row = patientsTable.insertRow();
+                    row.insertCell(0).textContent = item.firstname;
+                    row.insertCell(1).textContent = item.lastname;
+                    row.insertCell(2).textContent = item.address_line1;
+                    row.insertCell(3).textContent = item.city;
+                    row.insertCell(4).textContent = item.email;
+                    row.insertCell(5).textContent = item.procedure_date;
+                });
+            });
+        }
+
+        function logout() {
+            sessionStorage.clear();
+            window.location.href = 'Login.html';
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const currentDate = new Date().toISOString().slice(0, 10);
+            document.getElementById('startdate').value = new Date(Date.now() - 30*24*60*60*1000).toISOString().slice(0, 10);
+            document.getElementById('enddate').value = currentDate;
+            getAppointmentData();
+        });
+    </script>
+</body>
+</html>

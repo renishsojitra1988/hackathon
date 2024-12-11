@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            display: flex;
+            min-height: 100vh;
+            margin: 0;
+        }
+        .sidebar {
+            width: 200px;
+            background-color: #343a40;
+            color: white;
+            display: flex;
+            flex-direction: column;
+        }
+        .sidebar a {
+            padding: 15px;
+            text-decoration: none;
+            color: white;
+        }
+        .sidebar a:hover {
+            background-color: #495057;
+        }
+        .content {
+            flex-grow: 1;
+            padding: 20px;
+        }
+        .card {
+            background-color: white;
+            padding: 20px;
+            margin: 10px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <a href="Dashboard.html">Dashboard</a>
+        <a href="PatientManagement.html">Patient Management</a>
+        <a href="AppointmentandSchedulingManagement.html">Appointment and Scheduling</a>
+        <a href="ClinicalPerformanceMetrics.html">Clinical Performance</a>
+        <a href="#" onclick="logout()">Logout</a>
+    </div>
+    <div class="content">
+        <h2>Dashboard</h2>
+        <input type="date" id="startdate"> to
+        <input type="date" id="enddate">
+        <button onclick="getData()">Get Data</button>
+
+        <div class="card" id="totalProduction"></div>
+        <div class="card" id="adjustedProductionByDentist"></div>
+        <div class="card" id="adjustedProductionByHygienist"></div>
+        <div class="card" id="totalCollection"></div>
+    </div>
+
+    <script>
+        const request_key = sessionStorage.getItem('request_key');
+        const practice_id = sessionStorage.getItem('selectedPractice');
+
+        function getData() {
+            const startdate = document.getElementById('startdate').value;
+            const enddate = document.getElementById('enddate').value;
+
+            fetch(`https://api.sikkasoft.com/v4/kpis/total_production?startdate=${startdate}&enddate=${enddate}&practice_id=${practice_id}`, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Request-Key': request_key
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                const totalProduction = data.items[0]?.total_production || 'Data not available';
+                document.getElementById('totalProduction').textContent = `Total Production: ${totalProduction}`;
+            });
+
+            fetch(`https://api.sikkasoft.com/v4/kpis/adjusted_production_by_dentist?startdate=${startdate}&enddate=${enddate}&practice_id=${practice_id}`, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Request-Key': request_key
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                const dentistData = data.items[0];
+                const dentistName = `${dentistData?.firstname || ''} ${dentistData?.lastname || ''}`;
+                const adjustedProduction = dentistData?.adjusted_production || 'Data not available';
+                document.getElementById('adjustedProductionByDentist').textContent = `Adjusted Production by Dentist: ${dentistName} - ${adjustedProduction}`;
+            });
+
+            fetch(`https://api.sikkasoft.com/v4/kpis/adjusted_production_by_hygienist?startdate=${startdate}&enddate=${enddate}&practice_id=${practice_id}`, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Request-Key': request_key
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                const hygienistData = data.items[0];
+                const hygienistName = `${hygienistData?.firstname || ''} ${hygienistData?.lastname || ''}`;
+                const adjustedProduction = hygienistData?.adjusted_production || 'Data not available';
+                document.getElementById('adjustedProductionByHygienist').textContent = `Adjusted Production by Hygienist: ${hygienistName} - ${adjustedProduction}`;
+            });
+
+            fetch(`https://api.sikkasoft.com/v4/kpis/total_collection?startdate=${startdate}&enddate=${enddate}&practice_id=${practice_id}`, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Request-Key': request_key
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                const totalCollection = data.items[0]?.total_collection || 'Data not available';
+                document.getElementById('totalCollection').textContent = `Total Collection: ${Math.abs(totalCollection)}`;
+            });
+        }
+
+        function logout() {
+            sessionStorage.clear();
+            window.location.href = 'Login.html';
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const currentDate = new Date().toISOString().slice(0, 10);
+            document.getElementById('startdate').value = new Date(Date.now() - 30*24*60*60*1000).toISOString().slice(0, 10);
+            document.getElementById('enddate').value = currentDate;
+            getData();
+        });
+    </script>
+</body>
+</html>
